@@ -15,7 +15,17 @@ jobs:
       NEXT_PUBLIC_MP_PUBLIC_KEY: TEST-ci-placeholder
       NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ci-cloud
     steps:
+      # persist-credentials: false — actions/checkout otherwise leaves a
+      # local git config (http.https://github.com/.extraheader) carrying
+      # this workflow's own GITHUB_TOKEN (scoped only to this repo). That
+      # header applies to ANY https://github.com/ request afterward,
+      # including our rewritten fetch of the unrelated uroboros-types
+      # repo — and it wins over the credentials embedded in that rewrite,
+      # so the fetch fails as if unauthenticated no matter what token is
+      # used. Disabling persistence removes that conflict.
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -89,7 +99,17 @@ jobs:
       NEXT_PUBLIC_MP_PUBLIC_KEY: TEST-ci-placeholder
       NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ci-cloud
     steps:
+      # persist-credentials: false — actions/checkout otherwise leaves a
+      # local git config (http.https://github.com/.extraheader) carrying
+      # this workflow's own GITHUB_TOKEN (scoped only to this repo). That
+      # header applies to ANY https://github.com/ request afterward,
+      # including our rewritten fetch of the unrelated uroboros-types
+      # repo — and it wins over the credentials embedded in that rewrite,
+      # so the fetch fails as if unauthenticated no matter what token is
+      # used. Disabling persistence removes that conflict.
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
