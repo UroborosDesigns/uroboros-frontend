@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+      NEXT_PUBLIC_MP_PUBLIC_KEY: TEST-ci-placeholder
+      NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ci-cloud
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+      # `next build` statically prerenders public pages against the backend
+      # API at build time, so it needs a live instance to succeed — Vercel's
+      # own build always has NEXT_PUBLIC_API_BASE_URL pointed at the real
+      # deployed backend. CI only type/lint/unit-tests; production build
+      # correctness is verified by Vercel's build on deploy.
+
+  e2e:
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
