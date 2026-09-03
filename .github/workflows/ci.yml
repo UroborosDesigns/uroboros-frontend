@@ -26,20 +26,23 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.11.0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      # uroboros-types is a private repo; npm's `github:` dependency
+          cache: pnpm
+      # uroboros-types is a private repo; the "github:" dependency
       # resolution tries git+ssh first, which no runner has a key for.
       # Rewrite that to an authenticated HTTPS fetch instead, using a
       # fine-grained PAT (contents:read, scoped only to uroboros-types)
       # stored as the UROBOROS_TYPES_TOKEN repo secret.
       - run: git config --global url."https://x-access-token:${{ secrets.UROBOROS_TYPES_TOKEN }}@github.com/".insteadOf "ssh://git@github.com/"
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm run test
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run lint
+      - run: pnpm run typecheck
+      - run: pnpm run test
       # `next build` statically prerenders public pages against the backend
       # API at build time, so it needs a live instance to succeed — Vercel's
       # own build always has NEXT_PUBLIC_API_BASE_URL pointed at the real
@@ -114,15 +117,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.11.0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
       - run: git config --global url."https://x-access-token:${{ secrets.UROBOROS_TYPES_TOKEN }}@github.com/".insteadOf "ssh://git@github.com/"
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
       # The backend container runs its own migrations on startup (its
       # Docker CMD), but seeding is a separate, explicit step — run it
-      # against the already-running service container.
-      - run: docker exec ${{ job.services.backend.id }} npx prisma db seed
-      - run: npm run test:e2e
+      # against the already-running service container (also pnpm-based).
+      - run: docker exec ${{ job.services.backend.id }} pnpm exec prisma db seed
+      - run: pnpm run test:e2e

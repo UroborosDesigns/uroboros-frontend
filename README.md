@@ -45,24 +45,25 @@ Admin route protection is layered:
 
 ```bash
 cp .env.example .env.local     # fill in real values — see below
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 ```
 
-## A note on `uroboros-types` and Turbopack
+## A note on Turbopack and pnpm's node_modules layout
 
-This repo's `.npmrc` sets `install-links=true`. Without it, npm installs the local
-`file:../uroboros-types` dependency as a **symlink**, which Turbopack (Next 16's default bundler,
-used by both `next dev` and `next build`) fails to resolve in client-component bundles —
-reproducible on this exact setup as `Module not found: Can't resolve 'uroboros-types'`. With
-`install-links=true`, npm copies the package into `node_modules` instead of symlinking it, which
-Turbopack handles fine — and it also matches how the package will actually be installed in
-production (as a pinned git tag, never a symlink; see `uroboros-types/README.md`).
+Turbopack (Next 16's default bundler, used by both `next dev` and `next build`) has known issues
+resolving symlinked packages — reproducible on this exact setup as
+`Module not found: Can't resolve 'uroboros-types'`. This first came up with npm's `file:` local
+dependency (fixed there via `install-links=true`); pnpm's *default* linking mode symlinks
+essentially the entire dependency tree from a central `.pnpm` store, not just local/git deps, so it
+hits the same class of bug far more broadly. `pnpm-workspace.yaml` sets `nodeLinker: hoisted`,
+which gives a flat, non-symlinked `node_modules` — closer to npm's default layout, and confirmed
+working with Turbopack.
 
-**Trade-off**: after editing `uroboros-types` locally, re-run `npm install` here to pick up the
-change — it no longer updates live through a symlink. If you'd rather have the live-symlink
-convenience during heavy cross-repo iteration, remove `install-links=true` from `.npmrc` and use
-`next dev --webpack` / `next build --webpack` instead (Webpack resolves the symlink fine).
+**Trade-off**: none really — `hoisted` is simply a less isolated layout than pnpm's default
+(a package can technically `require()` an undeclared dependency that happens to be hoisted nearby,
+same phantom-dependency risk npm/yarn classic always had). Given this is a 3-package project, not a
+large monorepo, that risk is minimal.
 
 ## CI/CD secrets
 
@@ -71,7 +72,7 @@ GitHub Actions repo secrets (Settings → Secrets and variables → Actions):
 
 - **`UROBOROS_TYPES_TOKEN`** — the same fine-grained PAT described in `uroboros-backend`'s README
   (Contents: Read-only, scoped to only the `uroboros-types` repo). Used to resolve the private git
-  dependency during `npm ci`.
+  dependency during `pnpm install --frozen-lockfile`.
 - **`GHCR_PULL_TOKEN`** — a classic PAT with only the `read:packages` scope (fine-grained PATs
   don't yet reliably support scoping to a single container package, so this one is broader —
   read-only across whatever packages the account can see, still no write/repo access). Used to
@@ -87,12 +88,12 @@ gh secret set GHCR_PULL_TOKEN --repo UroborosDesigns/uroboros-frontend
 
 | Script | Purpose |
 | --- | --- |
-| `npm run dev` | Turbopack dev server |
-| `npm run build` / `npm run start` | Production build / run it |
-| `npm run lint` | ESLint (flat config) |
-| `npm run typecheck` | `tsc --noEmit` |
-| `npm run test` | Vitest unit tests |
-| `npm run test:e2e` | Playwright — see below |
+| `pnpm run dev` | Turbopack dev server |
+| `pnpm run build` / `pnpm run start` | Production build / run it |
+| `pnpm run lint` | ESLint (flat config) |
+| `pnpm run typecheck` | `tsc --noEmit` |
+| `pnpm run test` | Vitest unit tests |
+| `pnpm run test:e2e` | Playwright — see below |
 
 ## Environment variables
 
@@ -103,10 +104,10 @@ never a build-time value.
 
 ## Testing
 
-- `npm run test` — no external dependencies, safe to run any time.
-- `npm run test:e2e` — a single Playwright test covering browse → add to cart → checkout submit
+- `pnpm run test` — no external dependencies, safe to run any time.
+- `pnpm run test:e2e` — a single Playwright test covering browse → add to cart → checkout submit
   (the highest-value, highest-risk flow). Locally, requires `uroboros-backend` running with at
-  least one seeded, active product (`npm run prisma:seed` in that repo). The Mercado Pago call
+  least one seeded, active product (`pnpm run prisma:seed` in that repo). The Mercado Pago call
   itself isn't mocked (this app calls the backend server-side, so browser-level route
   interception can't reach it) — the test accepts either a redirect to Mercado Pago (real test
   credentials configured) or a visible error toast (placeholder dev credentials) as proof the flow
@@ -115,12 +116,12 @@ never a build-time value.
   (`NixOS cannot run dynamically linked executables...`). Either use `nix-ld`, or use
   `nix shell nixpkgs#playwright-driver.browsers` and point Playwright at it via
   `PLAYWRIGHT_BROWSERS_PATH`, or just trust CI — GitHub Actions runners are standard Ubuntu and
-  `npx playwright install --with-deps chromium` there works without any of this.
+  `pnpm exec playwright install --with-deps chromium` there works without any of this.
 - CI runs `test:e2e` only on pushes to `main` (or manual dispatch), not on every PR, to keep PR CI
   fast — see `.github/workflows/ci.yml`. That job runs `uroboros-backend`'s published Docker
   image (`ghcr.io/uroborosdesigns/uroboros-backend:latest`) as a service container alongside a
   Postgres service, migrates automatically on container start (the image's own `CMD`), then seeds
-  it (`docker exec ... npx prisma db seed`) before Playwright runs — no source checkout of the
+  it (`docker exec ... pnpm exec prisma db seed`) before Playwright runs — no source checkout of the
   backend needed, and it's the exact image Render would deploy.
 
 ## Build-time data fetching
@@ -128,7 +129,7 @@ never a build-time value.
 Pages that only need public data (`/`, `/productos`, category listing) are statically generated
 with `revalidate: 60`, and admin mutations call `revalidateTag(..., 'max')` to bust that cache
 immediately — so `next build` needs `uroboros-backend` reachable at `NEXT_PUBLIC_API_BASE_URL` to
-succeed. Locally that's fine (backend running on `:4000`); in CI, `npm run build` is skipped in
+succeed. Locally that's fine (backend running on `:4000`); in CI, `pnpm run build` is skipped in
 favor of just lint/typecheck/unit-tests, since Vercel's own deploy build is what actually needs to
 succeed, against the real deployed backend.
 

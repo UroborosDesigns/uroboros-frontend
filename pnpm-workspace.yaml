@@ -1,0 +1,11 @@
+# Turbopack (Next.js 16's default bundler) has known issues resolving
+# symlinked packages (confirmed with npm's file:../uroboros-types symlink —
+# see git history). pnpm's default node-linker ("isolated") symlinks
+# essentially the entire tree from a central .pnpm store, a much larger
+# surface for the same bug than npm's narrow file:/git-only symlinking.
+# hoisted gives a flat, non-symlinked node_modules closer to npm's layout.
+nodeLinker: hoisted
+
+allowBuilds:
+  # Native module resolver used by eslint-config-next's TS import resolver.
+  unrs-resolver: true
