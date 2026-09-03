@@ -20,6 +20,12 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      # uroboros-types is a private repo; npm's `github:` dependency
+      # resolution tries git+ssh first, which no runner has a key for.
+      # Rewrite that to an authenticated HTTPS fetch instead, using a
+      # fine-grained PAT (contents:read, scoped only to uroboros-types)
+      # stored as the UROBOROS_TYPES_TOKEN repo secret.
+      - run: git config --global url."https://x-access-token:${{ secrets.UROBOROS_TYPES_TOKEN }}@github.com/".insteadOf "ssh://git@github.com/"
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
@@ -33,12 +39,66 @@ jobs:
   e2e:
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    # Note: this job does NOT run in a container, so the two service
+    # containers below reach each other by hostname (Actions puts all
+    # service containers for a job on one Docker network regardless), but
+    # the job's own steps reach them via localhost + the mapped ports.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: uroboros_e2e
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      # Pulled from GHCR instead of built from uroboros-backend's source —
+      # avoids re-solving the private cross-repo checkout here entirely,
+      # and tests the exact image Render would deploy.
+      backend:
+        image: ghcr.io/uroborosdesigns/uroboros-backend:latest
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PULL_TOKEN }}
+        env:
+          PORT: 4000
+          DATABASE_URL: postgresql://postgres:postgres@postgres:5432/uroboros_e2e
+          FRONTEND_URL: http://localhost:3000
+          BACKEND_PUBLIC_URL: http://localhost:4000
+          JWT_SECRET: ci-only-secret-not-for-production
+          JWT_EXPIRES_IN: 2h
+          MP_ACCESS_TOKEN: TEST-ci-placeholder
+          MP_WEBHOOK_SECRET: ci-webhook-secret
+          CLOUDINARY_CLOUD_NAME: ci-cloud
+          CLOUDINARY_API_KEY: ci-key
+          CLOUDINARY_API_SECRET: ci-secret
+          SEED_ADMIN_EMAIL: admin@example.com
+          SEED_ADMIN_PASSWORD: e2e-only-not-for-production
+        ports:
+          - 4000:4000
+        options: >-
+          --health-cmd "node -e \"require('http').get('http://localhost:4000/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))\""
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+      NEXT_PUBLIC_MP_PUBLIC_KEY: TEST-ci-placeholder
+      NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ci-cloud
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+      - run: git config --global url."https://x-access-token:${{ secrets.UROBOROS_TYPES_TOKEN }}@github.com/".insteadOf "ssh://git@github.com/"
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      # The backend container runs its own migrations on startup (its
+      # Docker CMD), but seeding is a separate, explicit step — run it
+      # against the already-running service container.
+      - run: docker exec ${{ job.services.backend.id }} npx prisma db seed
       - run: npm run test:e2e

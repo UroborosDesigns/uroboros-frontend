@@ -64,6 +64,25 @@ change — it no longer updates live through a symlink. If you'd rather have the
 convenience during heavy cross-repo iteration, remove `install-links=true` from `.npmrc` and use
 `next dev --webpack` / `next build --webpack` instead (Webpack resolves the symlink fine).
 
+## CI/CD secrets
+
+`uroboros-types` and the backend's published Docker image are both private, so CI needs two
+GitHub Actions repo secrets (Settings → Secrets and variables → Actions):
+
+- **`UROBOROS_TYPES_TOKEN`** — the same fine-grained PAT described in `uroboros-backend`'s README
+  (Contents: Read-only, scoped to only the `uroboros-types` repo). Used to resolve the private git
+  dependency during `npm ci`.
+- **`GHCR_PULL_TOKEN`** — a classic PAT with only the `read:packages` scope (fine-grained PATs
+  don't yet reliably support scoping to a single container package, so this one is broader —
+  read-only across whatever packages the account can see, still no write/repo access). Used to
+  pull `ghcr.io/uroborosdesigns/uroboros-backend` as a service container in the `e2e` job.
+
+```bash
+gh secret set UROBOROS_TYPES_TOKEN --repo UroborosDesigns/uroboros-frontend
+gh secret set GHCR_PULL_TOKEN --repo UroborosDesigns/uroboros-frontend
+```
+(paste each token when prompted — keeps it out of shell history and any chat/log.)
+
 ## Scripts
 
 | Script | Purpose |
@@ -86,7 +105,7 @@ never a build-time value.
 
 - `npm run test` — no external dependencies, safe to run any time.
 - `npm run test:e2e` — a single Playwright test covering browse → add to cart → checkout submit
-  (the highest-value, highest-risk flow). Requires `uroboros-backend` running locally with at
+  (the highest-value, highest-risk flow). Locally, requires `uroboros-backend` running with at
   least one seeded, active product (`npm run prisma:seed` in that repo). The Mercado Pago call
   itself isn't mocked (this app calls the backend server-side, so browser-level route
   interception can't reach it) — the test accepts either a redirect to Mercado Pago (real test
@@ -98,8 +117,11 @@ never a build-time value.
   `PLAYWRIGHT_BROWSERS_PATH`, or just trust CI — GitHub Actions runners are standard Ubuntu and
   `npx playwright install --with-deps chromium` there works without any of this.
 - CI runs `test:e2e` only on pushes to `main` (or manual dispatch), not on every PR, to keep PR CI
-  fast — see `.github/workflows/ci.yml`. That job needs `uroboros-backend` (and a database) also
-  running in CI; wire that in once `uroboros-backend` has a GitHub remote to check out.
+  fast — see `.github/workflows/ci.yml`. That job runs `uroboros-backend`'s published Docker
+  image (`ghcr.io/uroborosdesigns/uroboros-backend:latest`) as a service container alongside a
+  Postgres service, migrates automatically on container start (the image's own `CMD`), then seeds
+  it (`docker exec ... npx prisma db seed`) before Playwright runs — no source checkout of the
+  backend needed, and it's the exact image Render would deploy.
 
 ## Build-time data fetching
 
