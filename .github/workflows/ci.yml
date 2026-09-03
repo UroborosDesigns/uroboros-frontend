@@ -139,6 +139,11 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       # The backend container runs its own migrations on startup (its
       # Docker CMD), but seeding is a separate, explicit step — run it
-      # against the already-running service container (also pnpm-based).
-      - run: docker exec ${{ job.services.backend.id }} pnpm exec prisma db seed
+      # against the already-running service container. Deliberately NOT
+      # `pnpm exec prisma db seed`: pnpm's exec re-verifies the lockfile
+      # against the npm registry on every invocation, which OOM-killed this
+      # same image outright on Render's 512Mi free tier (see uroboros-backend's
+      # Dockerfile). Harmless here given GitHub Actions runners' much larger
+      # memory budget, but there's no reason to depend on that headroom.
+      - run: docker exec ${{ job.services.backend.id }} ./node_modules/.bin/prisma db seed
       - run: pnpm run test:e2e
