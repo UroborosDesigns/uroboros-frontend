@@ -38,7 +38,12 @@ jobs:
       # Rewrite that to an authenticated HTTPS fetch instead, using a
       # fine-grained PAT (contents:read, scoped only to uroboros-types)
       # stored as the UROBOROS_TYPES_TOKEN repo secret.
-      - run: git config --global url."https://x-access-token:${{ secrets.UROBOROS_TYPES_TOKEN }}@github.com/".insteadOf "ssh://git@github.com/"
+      # pnpm fetches git dependencies via the SCP-style "git@github.com:..."
+      # form, not the "ssh://git@github.com/..." form npm used — different
+      # literal strings, so insteadOf (a prefix match) needs both rules.
+      - run: |
+          git config --global url."https://x-access-token:${{ secrets.UROBOROS_TYPES_TOKEN }}@github.com/".insteadOf "ssh://git@github.com/"
+          git config --global url."https://x-access-token:${{ secrets.UROBOROS_TYPES_TOKEN }}@github.com/".insteadOf "git@github.com:"
       - run: pnpm install --frozen-lockfile
       - run: pnpm run lint
       - run: pnpm run typecheck
@@ -124,7 +129,12 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - run: git config --global url."https://x-access-token:${{ secrets.UROBOROS_TYPES_TOKEN }}@github.com/".insteadOf "ssh://git@github.com/"
+      # pnpm fetches git dependencies via the SCP-style "git@github.com:..."
+      # form, not the "ssh://git@github.com/..." form npm used — different
+      # literal strings, so insteadOf (a prefix match) needs both rules.
+      - run: |
+          git config --global url."https://x-access-token:${{ secrets.UROBOROS_TYPES_TOKEN }}@github.com/".insteadOf "ssh://git@github.com/"
+          git config --global url."https://x-access-token:${{ secrets.UROBOROS_TYPES_TOKEN }}@github.com/".insteadOf "git@github.com:"
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
       # The backend container runs its own migrations on startup (its
