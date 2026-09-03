@@ -1,6 +1,5 @@
-import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
 
 export default function CheckoutSuccessPage() {
   return (
@@ -10,7 +9,7 @@ export default function CheckoutSuccessPage() {
       <p className="text-muted-foreground">
         Tu pago fue aprobado. Te vamos a contactar por email con los detalles del envío.
       </p>
-      <Button render={<Link href="/productos" />}>Seguir viendo productos</Button>
+      <ButtonLink href="/productos">Seguir viendo productos</ButtonLink>
     </div>
   );
 }

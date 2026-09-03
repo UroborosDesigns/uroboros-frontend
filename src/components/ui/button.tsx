@@ -1,5 +1,7 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
+import Link from "next/link"
+import type { ComponentProps } from "react"
 
 import { cn } from "@/lib/utils"
 
@@ -55,4 +57,20 @@ function Button({
   )
 }
 
-export { Button, buttonVariants }
+// A link styled like a button. Deliberately NOT `<Button render={<Link .../>}>`:
+// Base UI's own docs call that an anti-pattern — links have their own
+// semantics (role="link", Enter-to-activate) and "should not be rendered as
+// buttons through the render prop". Using it anyway silently drops button
+// semantics without adding link ones back, so the element ends up with
+// neither role reliably — e.g. failing a `getByRole("button", ...)` query
+// even though it displays as a button.
+function ButtonLink({
+  className,
+  variant = "default",
+  size = "default",
+  ...props
+}: ComponentProps<typeof Link> & VariantProps<typeof buttonVariants>) {
+  return <Link className={cn(buttonVariants({ variant, size, className }))} {...props} />
+}
+
+export { Button, ButtonLink, buttonVariants }

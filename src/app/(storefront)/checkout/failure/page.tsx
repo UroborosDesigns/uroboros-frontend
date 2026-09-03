@@ -1,6 +1,5 @@
-import Link from "next/link";
 import { XCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
 
 export default function CheckoutFailurePage() {
   return (
@@ -10,7 +9,7 @@ export default function CheckoutFailurePage() {
       <p className="text-muted-foreground">
         Podés intentar de nuevo con otro medio de pago desde tu carrito.
       </p>
-      <Button render={<Link href="/carrito" />}>Volver al carrito</Button>
+      <ButtonLink href="/carrito">Volver al carrito</ButtonLink>
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
 import { cartItemCount, useCartStore } from "@/stores/cart.store";
 
 export function SiteHeader() {
@@ -16,14 +16,15 @@ export function SiteHeader() {
           Uroboros
         </Link>
         <nav className="flex items-center gap-1">
-          <Button variant="ghost" render={<Link href="/productos" />}>
+          <ButtonLink variant="ghost" href="/productos">
             Productos
-          </Button>
-          <Button
+          </ButtonLink>
+          <ButtonLink
             variant="ghost"
             size="icon"
             className="relative"
-            render={<Link href="/carrito" aria-label="Carrito" />}
+            href="/carrito"
+            aria-label="Carrito"
           >
             <ShoppingBag className="size-5" />
             {count > 0 && (
@@ -31,7 +32,7 @@ export function SiteHeader() {
                 {count}
               </Badge>
             )}
-          </Button>
+          </ButtonLink>
         </nav>
       </div>
     </header>

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { cartTotalCents, useCartStore } from "@/stores/cart.store";
@@ -17,7 +17,7 @@ export default function CartPage() {
     return (
       <div className="space-y-4 py-12 text-center">
         <p className="text-muted-foreground">Tu carrito está vacío.</p>
-        <Button render={<Link href="/productos" />}>Ver productos</Button>
+        <ButtonLink href="/productos">Ver productos</ButtonLink>
       </div>
     );
   }
@@ -70,9 +70,9 @@ export default function CartPage() {
         <p className="text-lg font-semibold">{formatCents(cartTotalCents(lines))}</p>
       </div>
 
-      <Button render={<Link href="/checkout" />} size="lg" className="w-full">
+      <ButtonLink href="/checkout" size="lg" className="w-full">
         Finalizar compra
-      </Button>
+      </ButtonLink>
     </div>
   );
 }

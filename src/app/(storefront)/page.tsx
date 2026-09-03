@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
 import { ProductCard } from "@/components/storefront/product-card";
 import { getProducts } from "@/lib/api/products";
 
@@ -16,9 +15,9 @@ export default async function HomePage() {
         <p className="text-muted-foreground mx-auto max-w-md">
           Hecho a mano por una familia que ama el papel tanto como vos.
         </p>
-        <Button render={<Link href="/productos" />} size="lg" className="mt-2">
+        <ButtonLink href="/productos" size="lg" className="mt-2">
           Ver productos
-        </Button>
+        </ButtonLink>
       </section>
 
       {featured.length > 0 && (

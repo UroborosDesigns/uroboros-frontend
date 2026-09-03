@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getProducts } from "@/lib/api/products";
 import { formatCents } from "@/lib/utils";
@@ -16,7 +16,7 @@ export default async function AdminProductsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Productos</h1>
-        <Button render={<Link href="/admin/productos/nuevo" />}>Nuevo producto</Button>
+        <ButtonLink href="/admin/productos/nuevo">Nuevo producto</ButtonLink>
       </div>
 
       <Table>

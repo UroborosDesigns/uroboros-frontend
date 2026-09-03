@@ -1,6 +1,5 @@
-import Link from "next/link";
 import { Clock } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
 
 export default function CheckoutPendingPage() {
   return (
@@ -11,7 +10,7 @@ export default function CheckoutPendingPage() {
         Mercado Pago todavía está procesando tu pago. Te vamos a avisar por email en cuanto se
         confirme.
       </p>
-      <Button render={<Link href="/productos" />}>Volver a la tienda</Button>
+      <ButtonLink href="/productos">Volver a la tienda</ButtonLink>
     </div>
   );
 }

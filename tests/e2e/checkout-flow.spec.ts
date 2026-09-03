@@ -23,8 +23,9 @@ test("browse, add to cart, and submit checkout", async ({ page }) => {
   await expect(page.getByText(/agregado al carrito/i)).toBeVisible();
 
   await page.goto("/carrito");
-  await expect(page.getByRole("button", { name: /Finalizar compra/i })).toBeVisible();
-  await page.getByRole("button", { name: /Finalizar compra/i }).click();
+  // "Finalizar compra" navigates to /checkout — a real <a>, role="link".
+  await expect(page.getByRole("link", { name: /Finalizar compra/i })).toBeVisible();
+  await page.getByRole("link", { name: /Finalizar compra/i }).click();
 
   await expect(page).toHaveURL(/\/checkout$/);
   await page.getByLabel(/Nombre y apellido/i).fill("Test Cliente");
