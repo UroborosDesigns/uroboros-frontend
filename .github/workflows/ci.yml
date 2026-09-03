@@ -47,7 +47,11 @@ jobs:
       # correctness is verified by Vercel's build on deploy.
 
   e2e:
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    needs: build
+    # A job's own `if:` replaces the implicit success()-of-needs check
+    # entirely, not adds to it — without `success()` here, e2e would run
+    # on main/dispatch even if `build` (lint/typecheck/unit tests) failed.
+    if: success() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     # Note: this job does NOT run in a container, so the two service
     # containers below reach each other by hostname (Actions puts all
