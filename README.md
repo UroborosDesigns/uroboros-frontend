@@ -135,10 +135,17 @@ succeed, against the real deployed backend.
 
 ## Deployment (Vercel)
 
-1. Connect this repo to [Vercel](https://vercel.com) — zero extra config, Next.js is
+1. Connect this repo to [Vercel](https://vercel.com) — Next.js and `pnpm-lock.yaml` are both
    auto-detected.
 2. Set env vars in the Vercel dashboard (Production + Preview): `NEXT_PUBLIC_API_BASE_URL`
    (the deployed Render backend URL), `NEXT_PUBLIC_MP_PUBLIC_KEY`,
-   `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`.
+   `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`, and **`UROBOROS_TYPES_TOKEN`** — the same fine-grained PAT
+   used in CI/Render, needed here too since `uroboros-types` is a private git dependency and
+   Vercel's build environment has no SSH key configured for it. `vercel.json`'s `installCommand`
+   rewrites the git+ssh fetch to authenticated HTTPS using it (same fix as CI, just applied via
+   Vercel's install-command override instead of a workflow step, since Vercel doesn't run our
+   GitHub Actions config). Mark it Sensitive in Vercel's env var settings if that option is
+   available for your plan.
 3. Deploy. Then go back to `uroboros-backend`'s env vars and set its `FRONTEND_URL` to this
-   deployment's real URL (needed for CORS and Mercado Pago `back_urls`).
+   deployment's real URL (used for Mercado Pago `back_urls` — this app has no CORS exposure at
+   all, since every backend call is server-side; see the architecture note above).
