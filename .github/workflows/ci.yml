@@ -150,5 +150,12 @@ jobs:
       # same image outright on Render's 512Mi free tier (see uroboros-backend's
       # Dockerfile). Harmless here given GitHub Actions runners' much larger
       # memory budget, but there's no reason to depend on that headroom.
-      - run: docker exec ${{ job.services.backend.id }} ./node_modules/.bin/prisma db seed
+      #
+      # Calling the prisma binary directly (rather than via `pnpm exec`)
+      # means PATH no longer has node_modules/.bin prepended — and Prisma's
+      # seed runner shells out to a bare `tsx` command (see
+      # uroboros-backend's prisma.config.ts), so it needs that on PATH even
+      # though the tsx binary itself is already installed. Prepend it
+      # explicitly instead of routing through pnpm.
+      - run: docker exec ${{ job.services.backend.id }} sh -c "PATH=./node_modules/.bin:\$PATH ./node_modules/.bin/prisma db seed"
       - run: pnpm run test:e2e
