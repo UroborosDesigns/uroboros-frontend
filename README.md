@@ -78,9 +78,21 @@ GitHub Actions repo secrets (Settings → Secrets and variables → Actions):
   read-only across whatever packages the account can see, still no write/repo access). Used to
   pull `ghcr.io/uroborosdesigns/uroboros-backend` as a service container in the `e2e` job.
 
+Two more are optional but recommended, so the `e2e` job's checkout test exercises a real Mercado
+Pago redirect instead of falling back to the error-toast path:
+
+- **`MP_TEST_ACCESS_TOKEN`** / **`MP_TEST_PUBLIC_KEY`** — a **TEST-** prefixed access token and
+  public key from a Mercado Pago sandbox/test-user application (developers dashboard → your
+  application → Test credentials — the same kind used for local dev, see `uroboros-backend`'s
+  README). Never a production ("APP_USR-...") credential in CI. If these aren't set, the workflow
+  falls back to a placeholder value automatically — CI still passes, it just doesn't hit MP's real
+  API.
+
 ```bash
 gh secret set UROBOROS_TYPES_TOKEN --repo UroborosDesigns/uroboros-frontend
 gh secret set GHCR_PULL_TOKEN --repo UroborosDesigns/uroboros-frontend
+gh secret set MP_TEST_ACCESS_TOKEN --repo UroborosDesigns/uroboros-frontend
+gh secret set MP_TEST_PUBLIC_KEY --repo UroborosDesigns/uroboros-frontend
 ```
 (paste each token when prompted — keeps it out of shell history and any chat/log.)
 

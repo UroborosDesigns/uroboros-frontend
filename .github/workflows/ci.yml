@@ -92,7 +92,12 @@ jobs:
           BACKEND_PUBLIC_URL: http://localhost:4000
           JWT_SECRET: ci-only-secret-not-for-production
           JWT_EXPIRES_IN: 2h
-          MP_ACCESS_TOKEN: TEST-ci-placeholder
+          # Falls back to the placeholder when MP_TEST_ACCESS_TOKEN isn't set
+          # (e.g. before it's been added as a repo secret) — the test still
+          # runs, just via the error-toast fallback path instead of a real
+          # MP redirect. Real sandbox credentials come from a Mercado Pago
+          # test user's application (see README).
+          MP_ACCESS_TOKEN: ${{ secrets.MP_TEST_ACCESS_TOKEN || 'TEST-ci-placeholder' }}
           MP_WEBHOOK_SECRET: ci-webhook-secret
           CLOUDINARY_CLOUD_NAME: ci-cloud
           CLOUDINARY_API_KEY: ci-key
@@ -108,7 +113,7 @@ jobs:
           --health-retries 15
     env:
       NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
-      NEXT_PUBLIC_MP_PUBLIC_KEY: TEST-ci-placeholder
+      NEXT_PUBLIC_MP_PUBLIC_KEY: ${{ secrets.MP_TEST_PUBLIC_KEY || 'TEST-ci-placeholder' }}
       NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ci-cloud
     steps:
       # persist-credentials: false — actions/checkout otherwise leaves a
