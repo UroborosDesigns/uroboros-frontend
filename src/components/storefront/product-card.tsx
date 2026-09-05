@@ -9,7 +9,7 @@ export function ProductCard({ product }: { product: ProductWithCategory }) {
 
   return (
     <Link href={`/productos/${product.slug}`}>
-      <Card className="h-full gap-3 overflow-hidden py-0 transition-shadow hover:shadow-md">
+      <Card className="h-full gap-3 overflow-hidden border-2 border-foreground py-0 ring-0 transition-transform hover:-translate-y-0.5">
         <div className="bg-muted relative aspect-square w-full">
           {image ? (
             <Image
@@ -25,11 +25,11 @@ export function ProductCard({ product }: { product: ProductWithCategory }) {
             </div>
           )}
         </div>
-        <CardContent className="px-4">
+        <CardContent className="px-4 text-center">
           <p className="text-muted-foreground text-xs">{product.category.name}</p>
           <p className="font-medium leading-tight">{product.name}</p>
         </CardContent>
-        <CardFooter className="px-4 pb-4">
+        <CardFooter className="justify-center px-4 pb-4">
           <p className="font-semibold">{formatCents(product.priceCents)}</p>
         </CardFooter>
       </Card>

@@ -21,12 +21,17 @@ export default async function HomePage() {
       </section>
 
       {featured.length > 0 && (
-        <section className="space-y-4">
-          <h2 className="text-xl font-semibold">Destacados</h2>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-            {featured.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+        // Full-bleed band (breaks out of the page's max-w container) —
+        // mirrors the alternating white/light-gray section bands on
+        // indigostor3.empretienda.com.ar's homepage.
+        <section className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-secondary px-4 py-10 sm:px-6">
+          <div className="mx-auto max-w-5xl space-y-4">
+            <h2 className="text-xl font-semibold">Destacados</h2>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+              {featured.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
           </div>
         </section>
       )}
